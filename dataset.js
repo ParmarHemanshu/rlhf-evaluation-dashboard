@@ -1,0 +1,1 @@
+const dataset=[{type:"ranking",prompt:"Explain API",responses:["API is interface","API connects systems"],correct:1},{type:"debug",trace:["Login ok","Profile 401"],correct:"token"}];

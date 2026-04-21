@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html><head><title>RLHF Dashboard</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<h1>RLHF Evaluation Dashboard</h1>
+<div id="task"></div>
+<div id="actions"></div>
+<button onclick="nextTask()">Next</button>
+<h2>Analytics</h2>
+<p>Total: <span id="total">0</span></p>
+<p>Correct: <span id="correct">0</span></p>
+<p>Accuracy: <span id="accuracy">0%</span></p>
+<button onclick="exportResults()">Export JSON</button>
+<script src="dataset.js"></script>
+<script src="script.js"></script>
+</body></html>
