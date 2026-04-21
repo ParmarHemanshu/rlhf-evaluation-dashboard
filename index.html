@@ -1,15 +1,187 @@
 <!DOCTYPE html>
-<html><head><title>RLHF Dashboard</title><link rel="stylesheet" href="style.css"></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RLHF Evaluation Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
 <body>
-<h1>RLHF Evaluation Dashboard</h1>
-<div id="task"></div>
-<div id="actions"></div>
-<button onclick="nextTask()">Next</button>
-<h2>Analytics</h2>
-<p>Total: <span id="total">0</span></p>
-<p>Correct: <span id="correct">0</span></p>
-<p>Accuracy: <span id="accuracy">0%</span></p>
-<button onclick="exportResults()">Export JSON</button>
-<script src="dataset.js"></script>
-<script src="script.js"></script>
-</body></html>
+  <div class="app">
+    <aside class="sidebar" aria-label="Primary">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <div class="brand-title">RLHF Lab</div>
+          <div class="brand-sub">Evaluator</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <button type="button" class="nav-item is-active" data-view="evaluate">Evaluate</button>
+        <button type="button" class="nav-item" data-view="analytics">Analytics</button>
+      </nav>
+      <div class="sidebar-footer">
+        <p class="muted small">Rank responses or diagnose traces. Progress saves in this browser.</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 class="page-title">Evaluation workspace</h1>
+          <p class="page-sub muted">Human feedback loop — ranking and root-cause tasks</p>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" class="btn btn-ghost" id="btn-restart">Restart</button>
+          <button type="button" class="btn btn-primary" onclick="downloadResult()">Download Result</button>
+        </div>
+      </header>
+
+      <section id="view-evaluate" class="view">
+        <div class="grid-2">
+          <article class="card card-task">
+            <div class="card-head">
+              <div class="card-head-left">
+                <span class="pill" id="task-type-pill">Task</span>
+                <span class="badge badge-difficulty badge-medium" id="difficulty-badge" title="Item difficulty">Medium</span>
+              </div>
+              <span class="muted small" id="task-progress"></span>
+            </div>
+            <div class="task-toolbar">
+              <div class="timer-block" aria-live="polite" title="One shared countdown for the whole section; budget equals the number of questions in minutes.">
+                <span class="timer-icon" aria-hidden="true">⏱</span>
+                <div class="timer-block-text">
+                  <span class="timer-label">Section time left</span>
+                  <span class="timer-value" id="timer-value">—</span>
+                </div>
+                <span class="timer-budget muted small" id="timer-budget-hint"></span>
+              </div>
+            </div>
+            <div class="session-progress-block">
+              <div class="session-progress-head">
+                <span class="muted small">Session progress</span>
+                <span class="muted small" id="session-progress-label">0 / 0</span>
+              </div>
+              <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="session-progress-track">
+                <div class="progress-fill" id="session-progress-fill"></div>
+              </div>
+            </div>
+            <div id="task" class="task-body"></div>
+            <div id="ranking-feedback" class="ai-feedback-panel is-hidden" role="region" aria-label="Feedback"></div>
+            <div class="card-actions">
+              <button type="button" class="btn btn-secondary" onclick="nextTask()">Skip / next task</button>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <h2 class="card-title">Session snapshot</h2>
+            </div>
+            <div class="metrics">
+              <div class="metric">
+                <div class="metric-label">Total</div>
+                <div class="metric-value" id="total">0</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Correct</div>
+                <div class="metric-value" id="correct">0</div>
+              </div>
+              <div class="metric metric-accent">
+                <div class="metric-label">Accuracy</div>
+                <div class="metric-value" id="accuracy">0%</div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="chart" width="520" height="160" aria-label="Running accuracy"></canvas>
+            </div>
+            <p class="muted small chart-caption">Running accuracy; header line shows difficulty and section. Dots: green = correct, red = incorrect.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="view-analytics" class="view is-hidden">
+        <article class="card">
+          <div class="card-head">
+            <h2 class="card-title">Analytics</h2>
+          </div>
+          <div class="metrics analytics-row">
+            <div class="metric">
+              <div class="metric-label">Total</div>
+              <div class="metric-value" id="total-2">0</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Correct</div>
+              <div class="metric-value" id="correct-2">0</div>
+            </div>
+            <div class="metric metric-accent">
+              <div class="metric-label">Accuracy</div>
+              <div class="metric-value" id="accuracy-2">0%</div>
+            </div>
+          </div>
+          <div class="chart-wrap chart-wrap-lg">
+            <canvas id="chart-2" width="900" height="220" aria-label="Running accuracy large"></canvas>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <!-- Start / Restart: pick section + difficulty -->
+  <div id="start-backdrop" class="modal-backdrop is-hidden" role="presentation"></div>
+  <div id="start-modal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="start-modal-title">
+    <div class="modal-panel modal-panel-wide">
+      <h2 id="start-modal-title" class="modal-title">Configure evaluation</h2>
+      <p class="muted small modal-desc" id="setup-modal-desc">Choose a section and difficulty. Restart clears your run, timer, and charts so you begin fresh.</p>
+      <div id="setup-completion-banner" class="setup-completion-banner is-hidden" role="status">
+        <span class="setup-completion-icon" id="setup-completion-icon" aria-hidden="true">✓</span>
+        <div class="setup-completion-text">
+          <div class="setup-completion-heading" id="setup-completion-heading">Section finished</div>
+          <div id="setup-score-block" class="setup-score-block is-hidden">
+            <div class="setup-accuracy-pct" id="setup-accuracy-pct">—</div>
+            <div class="muted small" id="setup-score-detail"></div>
+          </div>
+          <p class="muted small setup-completion-summary" id="setup-completion-summary"></p>
+        </div>
+      </div>
+      <fieldset class="setup-fieldset">
+        <legend class="field-label">Section</legend>
+        <label class="radio-row"><input type="radio" name="setup-section" value="ranking" checked /> Option selection — pick the better model response</label>
+        <label class="radio-row"><input type="radio" name="setup-section" value="debug" /> Reason taking — diagnose the trace (root cause)</label>
+      </fieldset>
+      <fieldset class="setup-fieldset">
+        <legend class="field-label">Difficulty</legend>
+        <label class="radio-row"><input type="radio" name="setup-difficulty" value="easy" /> Easy</label>
+        <label class="radio-row"><input type="radio" name="setup-difficulty" value="medium" checked /> Medium</label>
+        <label class="radio-row"><input type="radio" name="setup-difficulty" value="hard" /> Hard</label>
+      </fieldset>
+      <p class="muted small" id="setup-count-hint"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="setup-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="setup-start">Start</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Root cause modal: HTML + CSS; opened/closed from script -->
+  <div id="root-cause-backdrop" class="modal-backdrop is-hidden" role="presentation"></div>
+  <div id="root-cause-modal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="root-cause-title">
+    <div class="modal-panel">
+      <h2 id="root-cause-title" class="modal-title">Root cause</h2>
+      <p class="muted small modal-desc">What failed in this trace? Your answer is checked against expected keywords.</p>
+      <label class="field-label" for="root-cause-input">Your diagnosis</label>
+      <textarea id="root-cause-input" class="input input-area" rows="3" placeholder="e.g. expired auth token, webhook not firing…"></textarea>
+      <p class="feedback-line is-hidden" id="root-cause-feedback" role="status"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="root-cause-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="root-cause-submit">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="dataset.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
