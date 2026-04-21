@@ -1,44 +1,310 @@
-const dataset = [
+var DATA_BANK = [
   {
     type: "ranking",
+    difficulty: "easy",
     prompt: "Explain REST API",
     responses: [
       "REST API is an interface.",
-      "REST API allows communication between systems using HTTP methods."
+      "REST API allows communication between systems using HTTP methods.",
     ],
-    correct: 1
+    correct: 1,
   },
   {
     type: "ranking",
+    difficulty: "easy",
     prompt: "Explain caching",
     responses: [
       "Caching stores data.",
-      "Caching stores frequently accessed data to reduce latency and backend load."
+      "Caching stores frequently accessed data to reduce latency and backend load.",
     ],
-    correct: 1
+    correct: 1,
   },
   {
     type: "debug",
-    trace: [
-      "Login success",
-      "Fetch profile → 401",
-      "Retry → 401"
-    ],
-    correct: "token"
+    difficulty: "medium",
+    timeLimitSec: 80,
+    prompt: "Auth loop after deploy",
+    trace: ["Login success", "Fetch profile → 401", "Retry → 401"],
+    correct: "token",
   },
   {
     type: "debug",
-    trace: [
-      "Payment success",
-      "Order not updated"
-    ],
-    correct: "callback"
+    difficulty: "medium",
+    prompt: "Payment succeeded but UI stale",
+    trace: ["Payment success", "Order not updated"],
+    correct: "callback",
   },
   {
     type: "debug",
-    trace: [
-      "SQL error: column not found"
+    difficulty: "hard",
+    timeLimitSec: 55,
+    prompt: "Database error on read",
+    trace: ["SQL error: column not found"],
+    correct: "syntax",
+  },
+  {
+    type: "ranking",
+    difficulty: "easy",
+    prompt: "What is idempotency?",
+    responses: [
+      "Idempotency means you can retry safely without changing the outcome beyond the first apply.",
+      "Idempotency is when requests are fast.",
     ],
-    correct: "syntax"
-  }
+    correct: 0,
+  },
+  {
+    type: "ranking",
+    difficulty: "medium",
+    prompt: "Describe microservices",
+    responses: [
+      "Microservices split a system into independently deployable services with clear boundaries.",
+      "Microservices are smaller computers.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "debug",
+    difficulty: "hard",
+    timeLimitSec: 60,
+    prompt: "Intermittent 504 from API gateway",
+    trace: ["Upstream healthy", "Gateway timeout", "Retries succeed"],
+    correct: "timeout",
+  },
+  {
+    type: "debug",
+    difficulty: "hard",
+    timeLimitSec: 65,
+    prompt: "Feature flag stuck off in prod",
+    trace: ["Flag ON in staging", "Prod still OFF", "Config service 304"],
+    correct: "cache",
+  },
+  {
+    type: "ranking",
+    difficulty: "medium",
+    prompt: "Explain CAP theorem at a high level",
+    responses: [
+      "CAP says under partition you must choose between strong consistency and availability.",
+      "CAP is about encryption strength.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "debug",
+    difficulty: "medium",
+    prompt: "Duplicate charges on double-click",
+    trace: ["Two POST /charge", "No idempotency key", "Bank shows two holds"],
+    correct: "idempotency",
+  },
+  {
+    type: "ranking",
+    difficulty: "easy",
+    prompt: "What is connection pooling?",
+    responses: [
+      "Connection pooling reuses DB connections to avoid expensive setup per request.",
+      "Connection pooling stores user passwords.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "debug",
+    difficulty: "hard",
+    timeLimitSec: 60,
+    prompt: "Webhook never received",
+    trace: ["Partner sent event", "Our endpoint 403", "Signature mismatch"],
+    correct: "signature",
+  },
+  {
+    type: "ranking",
+    difficulty: "medium",
+    prompt: "What is eventual consistency?",
+    responses: [
+      "Replicas converge over time; reads may be stale briefly.",
+      "All reads are always immediately consistent everywhere.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "debug",
+    difficulty: "medium",
+    timeLimitSec: 75,
+    prompt: "High CPU on single pod",
+    trace: ["CPU 95%", "GC thrashing", "Large in-memory cache per pod"],
+    correct: "memory",
+  },
+  {
+    type: "ranking",
+    difficulty: "easy",
+    prompt: "Purpose of a load balancer",
+    responses: [
+      "Spreads traffic across healthy instances and can terminate TLS.",
+      "Stores static assets only.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "debug",
+    difficulty: "hard",
+    timeLimitSec: 58,
+    prompt: "Race on concurrent inventory updates",
+    trace: ["Two workers read stock=1", "Both sell", "Oversold"],
+    correct: "race",
+  },
+  {
+    type: "ranking",
+    difficulty: "medium",
+    prompt: "What is observability?",
+    responses: [
+      "Using logs, metrics, and traces to understand internal states from external outputs.",
+      "Observability means hiding errors from users.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "debug",
+    difficulty: "medium",
+    prompt: "CORS error in browser only",
+    trace: ["curl works", "Browser blocked", "Missing Access-Control-Allow-Origin"],
+    correct: "cors",
+  },
+  {
+    type: "ranking",
+    difficulty: "easy",
+    prompt: "What is a reverse proxy?",
+    responses: [
+      "A server that fronts apps for TLS, routing, and caching before origin.",
+      "A proxy that only blocks malware.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "debug",
+    difficulty: "medium",
+    prompt: "Disk full on node",
+    trace: ["Writes fail", "df shows 100%", "Log rotation disabled"],
+    correct: "disk",
+  },
+  {
+    type: "ranking",
+    difficulty: "easy",
+    prompt: "Explain rate limiting",
+    responses: [
+      "Rate limiting caps request frequency to protect services and users.",
+      "Rate limiting speeds up all requests.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "debug",
+    difficulty: "hard",
+    timeLimitSec: 62,
+    prompt: "SSL handshake failure",
+    trace: ["TLS alert unknown ca", "Client trust store outdated"],
+    correct: "certificate",
+  },
+  {
+    type: "ranking",
+    difficulty: "medium",
+    prompt: "What is a dead letter queue?",
+    responses: [
+      "A queue for messages that failed processing so they can be inspected or retried.",
+      "A queue that deletes successful messages.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "debug",
+    difficulty: "hard",
+    timeLimitSec: 55,
+    prompt: "N+1 query slowdown",
+    trace: ["1 list query", "200 detail queries", "Latency spikes"],
+    correct: "query",
+  },
+  {
+    type: "debug",
+    difficulty: "easy",
+    prompt: "Simple auth failure",
+    trace: ["Login OK", "Call API → 401", "Token header missing"],
+    correct: "token",
+  },
+  {
+    type: "debug",
+    difficulty: "easy",
+    prompt: "Order stuck on Paid",
+    trace: ["Checkout success", "UI still Pending", "No webhook log line"],
+    correct: "callback",
+  },
+  {
+    type: "debug",
+    difficulty: "easy",
+    prompt: "Browser-only failure",
+    trace: ["curl to API works", "Browser shows blocked", "No Access-Control-Allow-Origin"],
+    correct: "cors",
+  },
+  {
+    type: "debug",
+    difficulty: "easy",
+    prompt: "Node cannot write logs",
+    trace: ["appendLog() throws", "df: 100% on /var", "Disk full"],
+    correct: "disk",
+  },
+  {
+    type: "debug",
+    difficulty: "easy",
+    prompt: "Old config after release",
+    trace: ["New flag in repo", "Service still old value", "304 from config CDN"],
+    correct: "cache",
+  },
+  {
+    type: "ranking",
+    difficulty: "hard",
+    prompt: "Compare linearizability vs serializability for distributed stores",
+    responses: [
+      "Serializability is about transaction schedules; linearizability adds real-time ordering on single-object ops like a register.",
+      "They are the same guarantee with different names for marketing.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "ranking",
+    difficulty: "hard",
+    prompt: "Why use vector clocks instead of only Lamport timestamps?",
+    responses: [
+      "Vector clocks capture concurrent updates per replica so you can detect causality conflicts; Lamport alone can’t distinguish true concurrency.",
+      "Vector clocks are always smaller and faster so you should always prefer them.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "ranking",
+    difficulty: "hard",
+    prompt: "Raft leader election after a partition heals",
+    responses: [
+      "Terms increase; followers reject stale leaders; the cluster converges on one leader with committed log agreement.",
+      "The old leader automatically resumes without checking logs.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "ranking",
+    difficulty: "hard",
+    prompt: "CRDTs vs operational transform for collaborative editing",
+    responses: [
+      "CRDTs merge with commutative laws without a central server; OT typically needs transformation functions and ordering from a server.",
+      "CRDT and OT are identical except CRDT requires Redis.",
+    ],
+    correct: 0,
+  },
+  {
+    type: "ranking",
+    difficulty: "hard",
+    prompt: "Byzantine vs crash faults in consensus",
+    responses: [
+      "Byzantine faults include arbitrary/malicious behavior; crash faults assume nodes only stop. Protocols tolerate different quorum sizes.",
+      "Byzantine only means slow networks, not malicious nodes.",
+    ],
+    correct: 0,
+  },
 ];
+
+/** Active slice; reassigned on Restart when user picks section + difficulty. */
+var dataset = DATA_BANK;
